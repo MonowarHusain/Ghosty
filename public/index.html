@@ -4,20 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Send me a message!</title>
+    <title>Ghosty | Send Anonymous Messages</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <div class="container">
         <div class="card">
-            <div class="profile-pic">?</div>
-            <h3>@anonymous</h3>
-            <p>Send me anonymous messages!</p>
+            <div class="profile-pic">👻</div>
+            <h1>Ghosty</h1>
+            <p>Send me an anonymous message!</p>
 
-            <textarea id="msgInput" placeholder="send me anonymous messages..." maxlength="500"></textarea>
+            <textarea id="msgInput" placeholder="Write something secret..." maxlength="500"></textarea>
 
-            <button onclick="sendMsg()" id="sendBtn">Send!</button>
+            <button onclick="sendMsg()" id="sendBtn">Send Anonymously</button>
             <p id="status"></p>
         </div>
     </div>
@@ -28,10 +28,10 @@
             const status = document.getElementById('status');
             const message = document.getElementById('msgInput').value;
 
-            if (!message) return alert("Type something first!");
+            if (!message) return alert("You can't send an empty ghost!");
 
             btn.disabled = true;
-            btn.innerText = "Sending...";
+            btn.innerText = "Vanishing...";
 
             try {
                 const res = await fetch('/api/send', {
@@ -41,16 +41,16 @@
                 });
 
                 if (res.ok) {
-                    status.innerText = "✅ Sent anonymously!";
+                    status.innerText = "👻 Your message has haunted their inbox!";
                     document.getElementById('msgInput').value = "";
                 } else {
-                    status.innerText = "❌ Error sending.";
+                    status.innerText = "❌ The ghost got lost. Try again!";
                 }
             } catch (e) {
                 status.innerText = "❌ Connection error.";
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Send!";
+                btn.innerText = "Send Anonymously";
             }
         }
     </script>
