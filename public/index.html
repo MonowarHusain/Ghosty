@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send me a message!</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="profile-pic">?</div>
+            <h3>@anonymous</h3>
+            <p>Send me anonymous messages!</p>
+
+            <textarea id="msgInput" placeholder="send me anonymous messages..." maxlength="500"></textarea>
+
+            <button onclick="sendMsg()" id="sendBtn">Send!</button>
+            <p id="status"></p>
+        </div>
+    </div>
+
+    <script>
+        async function sendMsg() {
+            const btn = document.getElementById('sendBtn');
+            const status = document.getElementById('status');
+            const message = document.getElementById('msgInput').value;
+
+            if (!message) return alert("Type something first!");
+
+            btn.disabled = true;
+            btn.innerText = "Sending...";
+
+            try {
+                const res = await fetch('/api/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                if (res.ok) {
+                    status.innerText = "✅ Sent anonymously!";
+                    document.getElementById('msgInput').value = "";
+                } else {
+                    status.innerText = "❌ Error sending.";
+                }
+            } catch (e) {
+                status.innerText = "❌ Connection error.";
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Send!";
+            }
+        }
+    </script>
+</body>
+
+</html>
