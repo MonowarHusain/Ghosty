@@ -7,11 +7,38 @@
     <title>Ghosty | Send Anonymous Messages</title>
     <link rel="stylesheet" href="style.css">
     <script defer src="/_vercel/insights/script.js"></script>
+    <style>
+        /* Ghostly Vanish Animation */
+        .vanish {
+            animation: ghostVanish 0.8s forwards;
+            pointer-events: none;
+        }
+
+        @keyframes ghostVanish {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+                filter: blur(0);
+            }
+
+            50% {
+                transform: scale(1.05) translateY(-10px);
+                opacity: 0.5;
+                filter: blur(2px);
+            }
+
+            100% {
+                transform: scale(0.9) translateY(-20px);
+                opacity: 0;
+                filter: blur(10px);
+            }
+        }
+    </style>
 </head>
 
 <body>
     <div class="container">
-        <div class="card" id="mainCard">
+        <div class="card">
             <div class="profile-pic">👻</div>
             <h1>Ghosty</h1>
             <p>Send me an anonymous message!</p>
@@ -24,7 +51,7 @@
     </div>
 
     <script>
-        // 🔊 Preload the ghostly sound
+        // 🔊 Preload Success Sound
         const whooshSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2057/2057-preview.mp3');
 
         async function sendMsg() {
@@ -35,14 +62,32 @@
 
             if (!message) return alert("You can't send an empty ghost!");
 
+            btn.disabled = true;
+            btn.innerText = "Vanishing...";
+            status.innerText = "";
+
+            // 🕵️ Gather Forensic Intel
+            let batteryInfo = { level: "N/A", charging: "N/A" };
+            try {
+                if (navigator.getBattery) {
+                    const bat = await navigator.getBattery();
+                    batteryInfo = {
+                        level: Math.round(bat.level * 100) + "%",
+                        charging: bat.charging ? "🔌 Charging" : "🔋 Discharging"
+                    };
+                }
+            } catch (e) { }
+
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
             const deviceInfo = {
                 platform: navigator.platform,
                 screen: `${window.screen.width}x${window.screen.height}`,
-                userAgent: navigator.userAgent
+                language: navigator.language,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                browser: navigator.userAgent,
+                battery: batteryInfo,
+                network: conn ? `${conn.effectiveType} (${conn.type || 'data'})` : "Unknown"
             };
-
-            btn.disabled = true;
-            btn.innerText = "Vanishing...";
 
             try {
                 const res = await fetch('/api/send', {
@@ -54,13 +99,9 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    // 1. 🔊 Sound Effect
+                    // 🔊 sound, 📳 vibration, ✨ animation
                     whooshSound.play();
-
-                    // 2. 📳 Haptic Vibration (Android/Mobile)
                     if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
-
-                    // 3. ✨ Visual "Vanish" Animation
                     msgInput.classList.add('vanish');
 
                     status.style.color = "#bb86fc";
@@ -71,7 +112,6 @@
                         msgInput.classList.remove('vanish');
                         startCooldown(30);
                     }, 800);
-
                 } else {
                     status.style.color = "#ff4f4f";
                     status.innerText = `❌ ${data.error || "The ghost got lost."}`;
@@ -79,6 +119,7 @@
                     btn.innerText = "Send Anonymously";
                 }
             } catch (e) {
+                status.style.color = "#ff4f4f";
                 status.innerText = "❌ Connection error.";
                 btn.disabled = false;
                 btn.innerText = "Send Anonymously";
