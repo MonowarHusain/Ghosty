@@ -11,7 +11,7 @@
 
 <body>
     <div class="container">
-        <div class="card">
+        <div class="card" id="mainCard">
             <div class="profile-pic">👻</div>
             <h1>Ghosty</h1>
             <p>Send me an anonymous message!</p>
@@ -24,6 +24,9 @@
     </div>
 
     <script>
+        // 🔊 Preload the ghostly sound
+        const whooshSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2057/2057-preview.mp3');
+
         async function sendMsg() {
             const btn = document.getElementById('sendBtn');
             const status = document.getElementById('status');
@@ -32,18 +35,14 @@
 
             if (!message) return alert("You can't send an empty ghost!");
 
-            // 1. Digital Detective Mode: Gather Hidden Intel
             const deviceInfo = {
                 platform: navigator.platform,
-                language: navigator.language,
                 screen: `${window.screen.width}x${window.screen.height}`,
                 userAgent: navigator.userAgent
             };
 
-            // UI Feedback
             btn.disabled = true;
             btn.innerText = "Vanishing...";
-            status.innerText = "";
 
             try {
                 const res = await fetch('/api/send', {
@@ -55,41 +54,43 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    // 2. Physical Feedback: Success Vibration (Android/Mobile)
-                    if (navigator.vibrate) {
-                        navigator.vibrate([100, 50, 100]);
-                    }
+                    // 1. 🔊 Sound Effect
+                    whooshSound.play();
+
+                    // 2. 📳 Haptic Vibration (Android/Mobile)
+                    if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+
+                    // 3. ✨ Visual "Vanish" Animation
+                    msgInput.classList.add('vanish');
 
                     status.style.color = "#bb86fc";
                     status.innerText = "👻 Your message has haunted their inbox!";
-                    msgInput.value = "";
 
-                    // 3. Spam Shield: Visual Cooldown
-                    startCooldown(30);
+                    setTimeout(() => {
+                        msgInput.value = "";
+                        msgInput.classList.remove('vanish');
+                        startCooldown(30);
+                    }, 800);
+
                 } else {
-                    // Handle Rate Limiting error from Server
                     status.style.color = "#ff4f4f";
                     status.innerText = `❌ ${data.error || "The ghost got lost."}`;
                     btn.disabled = false;
                     btn.innerText = "Send Anonymously";
                 }
             } catch (e) {
-                status.style.color = "#ff4f4f";
                 status.innerText = "❌ Connection error.";
                 btn.disabled = false;
                 btn.innerText = "Send Anonymously";
             }
         }
 
-        // Timer for the Spam Shield
         function startCooldown(seconds) {
             const btn = document.getElementById('sendBtn');
             let timeLeft = seconds;
-
             const timer = setInterval(() => {
                 btn.innerText = `Resting... (${timeLeft}s)`;
                 timeLeft--;
-
                 if (timeLeft < 0) {
                     clearInterval(timer);
                     btn.disabled = false;
